@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BioQuiz — Estudio interactivo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #f3e7ff 0%, #e0c3fc 50%, #c9b1ff 100%);
+    min-height: 100vh;
+    padding: 16px;
+    color: #2d1b4e;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(80, 30, 150, 0.15);
+    overflow: hidden;
+  }
+  header {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    color: #fff;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  header h1 { font-size: 26px; margin-bottom: 4px; letter-spacing: 0.5px; }
+  header p { font-size: 14px; opacity: 0.95; }
+  .main { padding: 20px; }
+  
+  /* Módulos */
+  .modules { display: grid; gap: 12px; }
+  .module-card {
+    background: #faf5ff;
+    border: 2px solid #e9d5ff;
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .module-card:hover { background: #f3e8ff; border-color: #a855f7; transform: translateY(-2px); }
+  .module-icon { font-size: 32px; flex-shrink: 0; }
+  .module-info h3 { color: #6b21a8; font-size: 16px; margin-bottom: 2px; }
+  .module-info p { font-size: 13px; color: #7e22ce; opacity: 0.85; }
+  
+  /* Selector de modo */
+  .mode-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 16px; }
+  .mode-btn {
+    background: #faf5ff;
+    border: 2px solid #e9d5ff;
+    border-radius: 12px;
+    padding: 14px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    color: #6b21a8;
+    font-weight: 600;
+    text-align: center;
+  }
+  .mode-btn:hover { background: #f3e8ff; border-color: #a855f7; }
+  .mode-btn .icon { display: block; font-size: 22px; margin-bottom: 4px; }
+  
+  /* Back button */
+  .back-btn {
+    background: transparent;
+    border: none;
+    color: #7c3aed;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 14px;
+    padding: 6px 0;
+    font-weight: 600;
+  }
+  .back-btn:hover { color: #6b21a8; }
+  
+  /* Header de modo */
+  .mode-header {
+    background: #f3e8ff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .mode-header h2 { color: #6b21a8; font-size: 16px; }
+  .progress {
+    font-size: 13px;
+    color: #7e22ce;
+    font-weight: 600;
+    background: #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  
+  /* Progress bar */
+  .progress-bar {
+    height: 6px;
+    background: #e9d5ff;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7c3aed, #c084fc);
+    transition: width 0.4s ease;
+    border-radius: 10px;
+  }
+  
+  /* Flashcard */
+  .flashcard {
+    background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+    border: 2px solid #d8b4fe;
+    border-radius: 18px;
+    padding: 30px 20px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 14px;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .flashcard:hover { box-shadow: 0 8px 20px rgba(168, 85, 247, 0.2); }
+  .flashcard-label {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #a855f7;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .flashcard-content {
+    font-size: 18px;
+    line-height: 1.5;
+    color: #2d1b4e;
+    font-weight: 500;
+  }
+  .flashcard-hint {
+    position: absolute;
+    bottom: 10px;
+    right: 16px;
+    font-size: 11px;
+    color: #a855f7;
+    opacity: 0.7;
+  }
+  
+  /* Pregunta */
+  .question-box {
+    background: #faf5ff;
+    border-left: 4px solid #a855f7;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .question-text { font-size: 16px; line-height: 1.5; color: #2d1b4e; font-weight: 500; }
+  
+  /* Opciones */
+  .options { display: grid; gap: 10px; margin-bottom: 16px; }
+  .option {
+    background: #fff;
+    border: 2px solid #e9d5ff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 15px;
+    text-align: left;
+    color: #2d1b4e;
+    line-height: 1.4;
+  }
+  .option:hover:not(:disabled) { background: #f3e8ff; border-color: #a855f7; }
+  .option.correct { background: #d1fae5; border-color: #10b981; color: #065f46; }
+  .option.incorrect { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+  .option:disabled { cursor: default; }
+  
+  /* Input */
+  .text-input {
+    width: 100%;
+    background: #fff;
+    border: 2px solid #e9d5ff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    color: #2d1b4e;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+  .text-input:focus { outline: none; border-color: #a855f7; }
+  .text-input.long { min-height: 120px; }
+  
+  /* Botones */
+  .btn {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 12px;
+    width: 100%;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-secondary {
+    background: #fff;
+    color: #7c3aed;
+    border: 2px solid #d8b4fe;
+  }
+  .btn-secondary:hover { background: #f3e8ff; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  
+  /* Feedback */
+  .feedback {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .feedback.success {
+    background: #d1fae5;
+    border-left: 4px solid #10b981;
+    color: #065f46;
+  }
+  .feedback.error {
+    background: #fee2e2;
+    border-left: 4px solid #ef4444;
+    color: #991b1b;
+  }
+  .feedback.partial {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    color: #78350f;
+  }
+  .feedback strong { display: block; margin-bottom: 6px; font-size: 15px; }
+  
+  /* Self-check (desarrollo) */
+  .self-check {
+    background: #faf5ff;
+    border: 2px solid #d8b4fe;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 14px;
+  }
+  .self-check h4 { color: #6b21a8; font-size: 14px; margin-bottom: 10px; }
+  .keyword-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .keyword {
+    background: #fff;
+    border: 2px solid #e9d5ff;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: #6b21a8;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .keyword.checked { background: #10b981; color: #fff; border-color: #10b981; }
+  .keyword.checked::before { content: "✓ "; }
+  .model-answer {
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #2d1b4e;
+    margin-top: 10px;
+  }
+  .model-answer-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #7c3aed;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Resultado final */
+  .results {
+    text-align: center;
+    padding: 30px 20px;
+  }
+  .results-emoji { font-size: 64px; margin-bottom: 14px; }
+  .results h2 { color: #6b21a8; font-size: 22px; margin-bottom: 6px; }
+  .results p { color: #7e22ce; font-size: 15px; margin-bottom: 20px; }
+  .results-score {
+    font-size: 36px;
+    font-weight: 700;
+    color: #7c3aed;
+    margin: 10px 0;
+  }
+  
+  .hidden { display: none !important; }
+  
+  @media (max-width: 480px) {
+    header h1 { font-size: 22px; }
+    .module-card { padding: 14px; }
+    .flashcard-content { font-size: 16px; }
+    .btn-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🧬 BioQuiz</h1>
+    <p>Estudio interactivo de Biología — Último año</p>
+  </header>
+  
+  <div class="main" id="main">
+    <!-- Contenido dinámico -->
+  </div>
+</div>
+
+<script>
+// ========== BANCO DE DATOS ==========
+const modules = [
+  {
+    id: "ciclos",
+    icon: "🌍",
+    title: "Ciclos Biogeoquímicos",
+    desc: "Nitrógeno, Azufre, Oxígeno, Fósforo, Carbono y Agua"
+  },
+  {
+    id: "respiracion",
+    icon: "🫁",
+    title: "Respiración Celular",
+    desc: "Glucólisis, Krebs, cadena respiratoria y fermentación"
+  },
+  {
+    id: "fases",
+    icon: "☀️",
+    title: "Fases de la Fotosíntesis",
+    desc: "Fase luminosa vs. fase oscura (Ciclo de Calvin)"
+  },
+  {
+    id: "carbono",
+    icon: "🌱",
+    title: "Sistemas del Carbono",
+    desc: "Fijación, emisión y pasos del ciclo del carbono"
+  },
+  {
+    id: "autotrofa",
+    icon: "🍃",
+    title: "Nutrición Autótrofa",
+    desc: "Fotosíntesis, cloroplastos y factores limitantes"
+  }
+];
+
+const flashcards = {
+  ciclos: [
+    { q: "¿En qué forma se encuentra el nitrógeno en la atmósfera?", a: "Como nitrógeno atmosférico (N₂), una forma inorgánica" },
+    { q: "¿Qué hacen las plantas con el nitrógeno atmosférico?", a: "Lo transforman de nitrógeno inorgánico a orgánico" },
+    { q: "¿Cómo regresa el nitrógeno a la atmósfera?", a: "Por la descomposición de organismos muertos" },
+    { q: "¿En qué forma se encuentra el azufre en la atmósfera?", a: "Como SO₂ (dióxido de azufre)" },
+    { q: "¿En qué transforman las plantas el SO₂?", a: "En sulfatos" },
+    { q: "¿Qué proceso usan las plantas para purificar el aire?", a: "La fotosíntesis (toman CO₂ y liberan O₂)" },
+    { q: "¿Qué liberan animales y plantas al respirar?", a: "CO₂ (dióxido de carbono)" },
+    { q: "¿Cuál es la fuente del fósforo en la naturaleza?", a: "Las rocas fosfatadas" },
+    { q: "¿Qué factores liberan el fósforo de las rocas?", a: "La erosión, el viento y la lluvia" },
+    { q: "¿Qué animales se alimentan directamente del fósforo?", a: "Los peces" },
+    { q: "¿Cómo fijan las plantas el CO₂?", a: "Por medio de la fotosíntesis" },
+    { q: "¿Quiénes descomponen la materia orgánica en el ciclo del carbono?", a: "Las bacterias (y hongos)" },
+    { q: "¿Qué fuente de energía impulsa el ciclo del agua?", a: "El sol" },
+    { q: "Orden del ciclo del agua (5 etapas principales)", a: "Evaporación → Condensación → Precipitación → Infiltración → Escorrentía" },
+    { q: "¿Qué es la evaporación?", a: "El paso del agua del estado líquido al gaseoso" },
+    { q: "¿Qué es la condensación?", a: "El paso del vapor de agua a gotas líquidas (forma nubes)" },
+    { q: "¿Qué es la infiltración?", a: "El proceso por el cual el agua entra al suelo" },
+    { q: "¿Qué es la escorrentía?", a: "El agua que corre por la superficie del terreno" }
+  ],
+  respiracion: [
+    { q: "¿Dónde ocurre la glucólisis?", a: "En el citosol (citoplasma) de la célula" },
+    { q: "¿En qué condición ocurre la glucólisis?", a: "En condición anaeróbica (sin oxígeno)" },
+    { q: "¿En qué se divide la glucosa durante la glucólisis?", a: "En 2 moléculas de 3 carbonos, formando ácido pirúvico" },
+    { q: "¿Qué se produce a partir del ADP en la glucólisis?", a: "ATP (energía)" },
+    { q: "¿A dónde se transporta el ácido pirúvico?", a: "A la mitocondria" },
+    { q: "¿Qué se forma al oxidar el ácido pirúvico?", a: "2 grupos acetilo" },
+    { q: "¿Qué es el acetil-CoA?", a: "La unión del grupo acetilo con la coenzima A" },
+    { q: "¿Cuál es la función del acetil-CoA?", a: "Permitir el paso de grasas, proteínas y carbohidratos al ciclo de Krebs" },
+    { q: "¿Con qué se combina el grupo acetilo en el ciclo de Krebs?", a: "Con el ácido oxalacético" },
+    { q: "¿Qué se forma de esa combinación?", a: "Ácido cítrico" },
+    { q: "¿Cuántas vueltas del ciclo de Krebs se necesitan?", a: "2 vueltas para terminarlo" },
+    { q: "¿Dónde ocurre la cadena respiratoria?", a: "En la mitocondria" },
+    { q: "¿Qué transporta la cadena respiratoria?", a: "Electrones, que generan energía (ATP)" },
+    { q: "¿Qué es la respiración aeróbica?", a: "La que SÍ necesita oxígeno" },
+    { q: "¿Qué es la respiración anaeróbica?", a: "La que NO necesita oxígeno (fermentación)" },
+    { q: "¿Qué hace la fermentación con el ácido pirúvico?", a: "Lo convierte en alcohol o en ácido láctico" },
+    { q: "¿Cuáles son los 3 tipos de fermentación?", a: "Alcohólica, láctica y acética" },
+    { q: "Fermentación alcohólica: ¿qué produce y ejemplos?", a: "Forma alcohol (etanol) a partir del azúcar. Ej: levaduras, bebidas alcohólicas, combustibles" },
+    { q: "Fermentación láctica: ¿dónde ocurre en el cuerpo?", a: "En las células musculares (causa agarrotamiento). Ej: yogurt, leche agria" },
+    { q: "Fermentación acética: ¿qué se produce?", a: "Ácido acético (vinagre), al exponer el etanol al aire mediante bacterias" },
+    { q: "¿Qué enzimas elaboran el vinagre?", a: "Las diastasas" }
+  ],
+  fases: [
+    { q: "¿Qué fuente de energía usa la fase luminosa?", a: "La luz del sol" },
+    { q: "¿Qué dos moléculas se forman en la fase luminosa?", a: "ATP y NADPH (las 'baterías' transportadoras de energía)" },
+    { q: "¿Dónde se capta la luz en el cloroplasto?", a: "En los tilacoides (por la clorofila)" },
+    { q: "¿Por qué las plantas se ven verdes?", a: "Porque la clorofila refleja el color verde" },
+    { q: "¿Qué se forma en el fotosistema I?", a: "ATP" },
+    { q: "¿Qué se forma en el fotosistema II?", a: "NADPH (obtiene energía del fotosistema I)" },
+    { q: "¿Qué es un fotón?", a: "Un paquete de energía luminosa" },
+    { q: "¿Qué molécula absorbe el fotón?", a: "Una molécula antena" },
+    { q: "¿Cuándo trabaja la fase oscura?", a: "En la noche, usando el ATP y NADPH formados durante el día" },
+    { q: "¿Qué usa la fase oscura como materia prima?", a: "El dióxido de carbono (CO₂)" },
+    { q: "¿Qué otros nombres recibe la fase oscura?", a: "Ciclo de Calvin, fijación de CO₂ o síntesis de glucosa" },
+    { q: "¿Cuáles son las 3 fases del Ciclo de Calvin?", a: "1) Fijación del carbono, 2) Síntesis del PGAL (fosfogliceraldehído), 3) Regeneración de la ribulosa" },
+    { q: "¿Qué se origina al fijarse el carbono?", a: "El PGA (al combinarse el CO₂ con ATP y NADPH)" },
+    { q: "¿Qué significa PGAL?", a: "Fosfogliceraldehído, que se origina a partir del PGA" },
+    { q: "¿Qué es la ribulosa?", a: "Un azúcar de 5 carbonos que se regenera en el ciclo" },
+    { q: "¿Cuál es el producto final del Ciclo de Calvin?", a: "La glucosa" }
+  ],
+  carbono: [
+    { q: "¿De qué biomoléculas forma parte el carbono?", a: "Proteínas, ácidos nucleicos (ADN-ARN), carbohidratos y lípidos" },
+    { q: "¿Cómo inicia el ciclo del carbono en las plantas?", a: "Por medio de la fotosíntesis (usando CO₂)" },
+    { q: "¿Para qué usan las plantas el CO₂?", a: "Para formar sus tejidos vegetales" },
+    { q: "¿Cómo se devuelve el oxígeno a la atmósfera?", a: "Por medio de la respiración celular" },
+    { q: "¿Cómo pasa el carbono de las plantas a los animales?", a: "Cuando los herbívoros se comen las plantas" },
+    { q: "¿Cómo liberan los animales el carbono?", a: "Como CO₂ por medio de la respiración" },
+    { q: "Paso 1 del ciclo del carbono", a: "El CO₂ atmosférico es absorbido por las plantas y convertido en azúcar por fotosíntesis" },
+    { q: "Paso 2 del ciclo del carbono", a: "Los animales comen las plantas y al descomponer los azúcares dejan salir el carbono a la atmósfera, océanos o suelo" },
+    { q: "Paso 3 del ciclo del carbono", a: "Bacterias y hongos descomponen las plantas muertas y la materia animal, devolviendo el carbono al ambiente" },
+    { q: "Paso 4 del ciclo del carbono", a: "El carbono también se intercambia entre los océanos y la atmósfera (interacción aire-agua)" }
+  ],
+  autotrofa: [
+    { q: "¿Qué son los seres autótrofos?", a: "Organismos que producen su propio alimento" },
+    { q: "Ejemplos de seres autótrofos", a: "Las plantas y algunas bacterias" },
+    { q: "¿Qué transforman las plantas?", a: "La energía del sol en energía química" },
+    { q: "¿Quién capta la luz en la planta?", a: "La clorofila" },
+    { q: "¿Qué moléculas se combinan en la fotosíntesis?", a: "El agua (rota por la luz) y el dióxido de carbono" },
+    { q: "¿Cuál es el producto final de la fotosíntesis?", a: "Los carbohidratos (glucosa)" },
+    { q: "¿Dónde se lleva a cabo la fotosíntesis?", a: "En los cloroplastos, ubicados en las hojas de las plantas" },
+    { q: "¿Cómo se llama la doble membrana del cloroplasto?", a: "Estroma" },
+    { q: "¿Qué hay dentro del cloroplasto?", a: "Los tilacoides" },
+    { q: "¿Cómo se llama un grupo de tilacoides apilados?", a: "Grana" },
+    { q: "¿Cuáles son los 4 factores limitantes de la fotosíntesis?", a: "Agua, luz, temperatura y dióxido de carbono" }
+  ]
+};
+
+const quiz = {
+  ciclos: [
+    { q: "¿En qué forma se encuentra el nitrógeno en la atmósfera?", opts: ["Como sulfatos", "Como nitrógeno atmosférico", "Como amoníaco directamente", "Como CO₂"], correct: 1, exp: "El nitrógeno está en la atmósfera como N₂ (nitrógeno atmosférico), forma inorgánica que las plantas deben transformar." },
+    { q: "¿En qué transforman las plantas el SO₂?", opts: ["En oxígeno", "En nitratos", "En sulfatos", "En carbohidratos"], correct: 2, exp: "Las plantas absorben el SO₂ y lo transforman en sulfatos, que luego pasan a los animales por consumo." },
+    { q: "¿Cuál es el orden correcto del ciclo del agua?", opts: ["Sol → Condensación → Evaporación → Precipitación", "Sol → Evaporación → Condensación → Precipitación", "Evaporación → Sol → Precipitación → Condensación", "Precipitación → Evaporación → Sol → Condensación"], correct: 1, exp: "El sol provoca evaporación, el vapor se condensa formando nubes y luego cae como precipitación." },
+    { q: "¿Cómo regresa el carbono a la atmósfera tras la muerte de los organismos?", opts: ["Por la fotosíntesis", "Por evaporación", "Por la descomposición realizada por bacterias", "Por la erosión"], correct: 2, exp: "Las bacterias descomponen los organismos muertos y liberan CO₂ de regreso a la atmósfera." },
+    { q: "¿Cuál es la fuente principal del fósforo?", opts: ["La atmósfera", "Los océanos exclusivamente", "Las rocas fosfatadas", "Las plantas"], correct: 2, exp: "El fósforo viene de las rocas fosfatadas; la erosión, viento y lluvia lo liberan al ambiente." },
+    { q: "¿Qué proceso libera CO₂ en el ciclo del oxígeno?", opts: ["La fotosíntesis", "La respiración de animales y plantas", "La evaporación", "La fijación"], correct: 1, exp: "Tanto animales como plantas respiran y liberan CO₂; las plantas además purifican el aire por fotosíntesis." },
+    { q: "¿En qué etapa del ciclo del agua el agua entra al suelo?", opts: ["Evaporación", "Condensación", "Precipitación", "Infiltración"], correct: 3, exp: "La infiltración es el proceso por el cual el agua penetra en el suelo." }
+  ],
+  respiracion: [
+    { q: "¿Cuál es el orden correcto de la respiración celular aeróbica?", opts: ["Glucólisis → Krebs → Reacciones intermedias → Cadena respiratoria", "Glucólisis → Reacciones intermedias → Ciclo de Krebs → Cadena respiratoria", "Reacciones intermedias → Glucólisis → Krebs → Cadena respiratoria", "Cadena respiratoria → Krebs → Reacciones intermedias → Glucólisis"], correct: 1, exp: "Primero la glucosa se rompe en glucólisis, luego el pirúvico pasa por reacciones intermedias para entrar al Ciclo de Krebs, y finalmente la cadena respiratoria produce ATP." },
+    { q: "¿Dónde ocurre la glucólisis?", opts: ["En la mitocondria", "En el núcleo", "En el citosol (citoplasma)", "En el cloroplasto"], correct: 2, exp: "La glucólisis ocurre en el citosol de la célula y NO necesita oxígeno (es anaeróbica)." },
+    { q: "¿Cuántas vueltas del ciclo de Krebs se necesitan para completarlo?", opts: ["1", "2", "3", "4"], correct: 1, exp: "Se necesitan 2 vueltas del ciclo de Krebs porque la glucosa generó 2 moléculas de ácido pirúvico (y por tanto 2 acetilos)." },
+    { q: "La fermentación es:", opts: ["Aeróbica (con oxígeno)", "Anaeróbica (sin oxígeno)", "Ambas a la vez", "Ninguna de las anteriores"], correct: 1, exp: "La fermentación es anaeróbica: convierte el ácido pirúvico en alcohol o ácido láctico sin necesidad de oxígeno." },
+    { q: "El agarrotamiento muscular después del ejercicio se debe a:", opts: ["Fermentación alcohólica", "Fermentación láctica", "Fermentación acética", "Cadena respiratoria"], correct: 1, exp: "La fermentación láctica ocurre en las células musculares cuando falta oxígeno, produciendo ácido láctico (agarrotamiento)." },
+    { q: "¿Qué se forma al unir el grupo acetilo con la coenzima A?", opts: ["Ácido pirúvico", "Ácido cítrico", "Acetil-CoA", "ATP"], correct: 2, exp: "El acetil-CoA permite el paso de grasas, proteínas y carbohidratos al ciclo de Krebs." },
+    { q: "¿Con qué se combina el acetilo en el ciclo de Krebs?", opts: ["Con ATP", "Con ácido oxalacético", "Con NADPH", "Con glucosa"], correct: 1, exp: "El acetilo se combina con el ácido oxalacético para formar ácido cítrico, que ayuda a oxidar la glucosa." },
+    { q: "El vinagre se elabora gracias a enzimas llamadas:", opts: ["Lactasas", "Diastasas", "Proteasas", "Lipasas"], correct: 1, exp: "Las diastasas son las enzimas que oxidan el etanol al exponerlo al aire, formando ácido acético (vinagre)." }
+  ],
+  fases: [
+    { q: "¿Qué fase de la fotosíntesis necesita luz solar?", opts: ["Fase oscura", "Fase luminosa", "Ambas", "Ninguna"], correct: 1, exp: "La fase luminosa usa la luz del sol; la fase oscura puede trabajar sin luz usando el ATP y NADPH formado en la luminosa." },
+    { q: "¿Qué fase usa el ATP y el NADPH como combustible?", opts: ["Fase luminosa", "Fase oscura", "Ambas", "Ninguna"], correct: 1, exp: "La fase oscura (Ciclo de Calvin) usa el ATP y NADPH producidos en la fase luminosa para fijar el CO₂." },
+    { q: "El producto final del Ciclo de Calvin es:", opts: ["ATP", "NADPH", "Glucosa", "Oxígeno"], correct: 2, exp: "El Ciclo de Calvin termina regenerando la ribulosa y produciendo glucosa como producto final." },
+    { q: "¿Qué se forma en el fotosistema I?", opts: ["NADPH", "ATP", "Glucosa", "CO₂"], correct: 1, exp: "Fotosistema I → ATP. Fotosistema II → NADPH (obtiene energía del fotosistema I)." },
+    { q: "¿Qué otros nombres recibe la fase oscura?", opts: ["Fotosistema I", "Glucólisis", "Ciclo de Calvin, fijación de CO₂, síntesis de glucosa", "Cadena respiratoria"], correct: 2, exp: "La fase oscura tiene varios nombres porque describe distintos aspectos del mismo proceso." },
+    { q: "¿Qué se origina al fijarse el CO₂ con ATP y NADPH?", opts: ["PGAL", "PGA", "Ribulosa", "Glucosa"], correct: 1, exp: "Primero se forma el PGA, luego se sintetiza el PGAL (fosfogliceraldehído) a partir del PGA." }
+  ],
+  carbono: [
+    { q: "¿De qué biomoléculas NO forma parte el carbono?", opts: ["Proteínas", "Ácidos nucleicos", "Agua", "Lípidos"], correct: 2, exp: "El agua (H₂O) no contiene carbono. El carbono está en proteínas, ADN-ARN, carbohidratos y lípidos." },
+    { q: "¿Quiénes descomponen las plantas muertas y la materia animal?", opts: ["Solo bacterias", "Solo hongos", "Bacterias y hongos", "Solo otras plantas"], correct: 2, exp: "Bacterias y hongos juntos descomponen la materia orgánica, devolviendo el carbono al ambiente." },
+    { q: "¿Cómo absorbe la planta el CO₂?", opts: ["Por respiración", "Por fotosíntesis", "Por evaporación", "Por descomposición"], correct: 1, exp: "Las plantas toman CO₂ del aire y lo convierten en azúcar mediante la fotosíntesis." },
+    { q: "Además de la atmósfera, ¿dónde más se intercambia el carbono?", opts: ["Solo en el suelo", "Solo en el aire", "Entre los océanos y la atmósfera", "Solo en las plantas"], correct: 2, exp: "El intercambio aire-agua entre océanos y atmósfera es otra ruta importante del ciclo del carbono." }
+  ],
+  autotrofa: [
+    { q: "La doble membrana del cloroplasto se llama:", opts: ["Tilacoide", "Grana", "Estroma", "Membrana plasmática"], correct: 2, exp: "El estroma es la doble membrana que rodea al cloroplasto; dentro están los tilacoides." },
+    { q: "Los tilacoides apilados forman:", opts: ["Estroma", "Grana", "Cloroplasto entero", "Citoplasma"], correct: 1, exp: "Cuando varios tilacoides se apilan, ese conjunto se llama grana." },
+    { q: "¿Cuál NO es un factor limitante de la fotosíntesis?", opts: ["Agua", "Luz", "Oxígeno", "Temperatura"], correct: 2, exp: "El oxígeno es un PRODUCTO de la fotosíntesis, no un factor limitante. Los limitantes son: agua, luz, temperatura y CO₂." },
+    { q: "¿Quiénes son seres autótrofos?", opts: ["Solo los animales", "Las plantas y algunas bacterias", "Solo los hongos", "Solo los humanos"], correct: 1, exp: "Los autótrofos producen su propio alimento. Las plantas y algunas bacterias lo logran transformando energía solar en química." },
+    { q: "¿Dónde están ubicados los cloroplastos?", opts: ["En las raíces", "En el tallo", "En las hojas de las plantas", "En las flores"], correct: 2, exp: "Los cloroplastos están en las hojas, donde captan la luz solar para la fotosíntesis." }
+  ]
+};
+
+const shortAnswer = {
+  ciclos: [
+    { q: "Menciona los 6 ciclos biogeoquímicos vistos.", keywords: ["nitrógeno", "azufre", "oxígeno", "fósforo", "carbono", "agua"], model: "Los 6 ciclos son: nitrógeno, azufre, oxígeno, fósforo, carbono y agua." },
+    { q: "¿Qué tres factores liberan el fósforo de las rocas?", keywords: ["erosión", "viento", "lluvia"], model: "La erosión, el viento y la lluvia liberan el fósforo de las rocas fosfatadas." },
+    { q: "Nombra las 5 etapas principales del ciclo del agua.", keywords: ["evaporación", "condensación", "precipitación", "infiltración", "escorrentía"], model: "Evaporación, condensación, precipitación, infiltración y escorrentía (el sol impulsa todo el ciclo)." },
+    { q: "¿Cómo regresa el nitrógeno a la atmósfera al final del ciclo?", keywords: ["descomposición", "organismos", "muertos"], model: "Cuando los organismos mueren, los descomponedores liberan el nitrógeno de regreso a la atmósfera." }
+  ],
+  respiracion: [
+    { q: "¿Cuáles son las 4 etapas de la respiración celular aeróbica?", keywords: ["glucólisis", "reacciones intermedias", "krebs", "cadena respiratoria"], model: "Glucólisis, reacciones intermedias (oxidación del pirúvico y formación de acetil-CoA), ciclo de Krebs y cadena respiratoria." },
+    { q: "Nombra los 3 tipos de fermentación y un ejemplo de cada uno.", keywords: ["alcohólica", "láctica", "acética", "levadura", "yogurt", "vinagre"], model: "Alcohólica (ej: levaduras, bebidas alcohólicas), láctica (ej: yogurt, leche agria, agarrotamiento muscular) y acética (ej: vinagre)." },
+    { q: "¿Qué es el acetil-CoA y cuál es su función?", keywords: ["acetilo", "coenzima", "krebs", "grasas", "proteínas", "carbohidratos"], model: "Es la unión del grupo acetilo con la coenzima A. Su función es permitir el paso de grasas, proteínas y carbohidratos al ciclo de Krebs." },
+    { q: "¿Dónde ocurren la glucólisis y la cadena respiratoria?", keywords: ["citosol", "citoplasma", "mitocondria"], model: "La glucólisis ocurre en el citosol (citoplasma) y la cadena respiratoria en la mitocondria." }
+  ],
+  fases: [
+    { q: "¿Qué se forma en el fotosistema I y qué en el fotosistema II?", keywords: ["atp", "nadph", "fotosistema"], model: "En el fotosistema I se forma el ATP. En el fotosistema II se forma el NADPH (que obtiene energía del fotosistema I)." },
+    { q: "Nombra los 3 nombres alternativos de la fase oscura.", keywords: ["calvin", "fijación", "carbono", "síntesis", "glucosa"], model: "Ciclo de Calvin, fijación de dióxido de carbono y síntesis de glucosa." },
+    { q: "¿Cuáles son las 3 fases del Ciclo de Calvin?", keywords: ["fijación", "síntesis", "pgal", "regeneración", "ribulosa"], model: "1) Fijación del carbono (origina el PGA), 2) Síntesis del PGAL (fosfogliceraldehído) a partir del PGA, 3) Regeneración de la ribulosa (azúcar de 5 carbonos) → glucosa." }
+  ],
+  carbono: [
+    { q: "Enumera los 4 pasos del ciclo del carbono.", keywords: ["plantas", "fotosíntesis", "animales", "bacterias", "hongos", "océanos"], model: "1) Plantas absorben CO₂ y lo convierten en azúcar por fotosíntesis. 2) Los animales comen las plantas y liberan carbono al atmósfera/océanos/suelo. 3) Bacterias y hongos descomponen plantas y animales muertos. 4) Intercambio entre océanos y atmósfera." },
+    { q: "¿En qué biomoléculas está presente el carbono?", keywords: ["proteínas", "ácidos nucleicos", "adn", "arn", "carbohidratos", "lípidos"], model: "Proteínas, ácidos nucleicos (ADN-ARN), carbohidratos y lípidos." }
+  ],
+  autotrofa: [
+    { q: "¿Qué son los seres autótrofos? Da ejemplos.", keywords: ["alimento", "plantas", "bacterias", "sol", "energía"], model: "Son seres que producen su propio alimento transformando la energía del sol en energía química. Ejemplos: las plantas y algunas bacterias." },
+    { q: "Nombra los 4 factores limitantes de la fotosíntesis.", keywords: ["agua", "luz", "temperatura", "dióxido", "carbono"], model: "Agua, luz, temperatura y dióxido de carbono." },
+    { q: "Describe la estructura del cloroplasto.", keywords: ["estroma", "tilacoides", "grana", "hojas", "membrana"], model: "Los cloroplastos están en las hojas, rodeados por una doble membrana llamada estroma. Dentro contienen los tilacoides, y cuando estos se apilan forman las grana." }
+  ]
+};
+
+const development = {
+  ciclos: [
+    {
+      q: "Explica con tus propias palabras el ciclo del nitrógeno completo.",
+      keywords: ["nitrógeno atmosférico", "plantas", "inorgánico", "orgánico", "animales", "consumen", "mueren", "descomposición"],
+      model: "El nitrógeno está en la atmósfera como N₂ (forma inorgánica). Las plantas lo absorben y lo transforman de nitrógeno inorgánico a orgánico. Luego los animales consumen ese nitrógeno al comerse las plantas. Cuando los organismos mueren, la descomposición devuelve el nitrógeno a la atmósfera, cerrando el ciclo."
+    },
+    {
+      q: "Describe cómo se conecta el ciclo del oxígeno con el ciclo del carbono.",
+      keywords: ["fotosíntesis", "respiración", "co2", "oxígeno", "plantas", "animales"],
+      model: "Los dos ciclos están conectados por la fotosíntesis y la respiración. Las plantas absorben CO₂ y liberan oxígeno mediante la fotosíntesis. Animales y plantas usan ese oxígeno en la respiración y liberan CO₂. Así, lo que es producto de un ciclo es materia prima del otro."
+    }
+  ],
+  respiracion: [
+    {
+      q: "Explica la diferencia entre respiración aeróbica y anaeróbica.",
+      keywords: ["oxígeno", "aeróbica", "anaeróbica", "fermentación", "atp", "pirúvico"],
+      model: "La respiración aeróbica SÍ necesita oxígeno y comprende glucólisis, reacciones intermedias, ciclo de Krebs y cadena respiratoria, produciendo gran cantidad de ATP. La anaeróbica (fermentación) NO necesita oxígeno y convierte el ácido pirúvico en alcohol o ácido láctico, generando mucho menos ATP."
+    },
+    {
+      q: "Compara los tres tipos de fermentación dando un ejemplo de cada uno.",
+      keywords: ["alcohólica", "láctica", "acética", "etanol", "ácido láctico", "vinagre", "levaduras", "yogurt", "diastasas"],
+      model: "Fermentación alcohólica: convierte el ácido pirúvico en etanol (alcohol). Ej: levaduras, bebidas alcohólicas. Fermentación láctica: produce ácido láctico a partir del pirúvico; ocurre en las células musculares y causa agarrotamiento. Ej: yogurt, leche agria. Fermentación acética: el etanol se expone al aire y se oxida con bacterias formando ácido acético (vinagre), mediante enzimas llamadas diastasas."
+    }
+  ],
+  fases: [
+    {
+      q: "Explica las diferencias principales entre la fase luminosa y la fase oscura de la fotosíntesis.",
+      keywords: ["luz", "sol", "atp", "nadph", "tilacoides", "co2", "calvin", "glucosa", "día", "noche"],
+      model: "La fase luminosa necesita luz solar y ocurre en los tilacoides; en ella la clorofila capta la luz y se forman ATP y NADPH (las baterías energéticas). Tiene dos fotosistemas: I produce ATP y II produce NADPH. La fase oscura (Ciclo de Calvin) no necesita luz directa: usa el ATP y NADPH del día y como materia prima el CO₂. Sus 3 fases son fijación del carbono (PGA), síntesis de PGAL y regeneración de la ribulosa, dando como producto final la glucosa."
+    }
+  ],
+  carbono: [
+    {
+      q: "Explica el ciclo completo del carbono.",
+      keywords: ["co2", "fotosíntesis", "plantas", "azúcar", "animales", "descomponen", "bacterias", "hongos", "océanos", "atmósfera"],
+      model: "El CO₂ atmosférico es absorbido por las plantas y convertido en azúcar mediante fotosíntesis. Los animales se comen las plantas y, al descomponer los azúcares, liberan carbono a la atmósfera, océanos o suelo. Las bacterias y hongos descomponen las plantas muertas y la materia animal, devolviendo el carbono al ambiente. Además, hay un intercambio continuo entre los océanos y la atmósfera. El carbono es esencial porque forma parte de proteínas, ácidos nucleicos, carbohidratos y lípidos."
+    }
+  ],
+  autotrofa: [
+    {
+      q: "Explica el proceso de la fotosíntesis paso a paso, mencionando dónde ocurre y qué se necesita.",
+      keywords: ["clorofila", "luz", "sol", "agua", "co2", "carbohidratos", "glucosa", "cloroplastos", "hojas", "tilacoides"],
+      model: "La fotosíntesis ocurre en los cloroplastos de las hojas. Primero, la clorofila capta la luz solar. Esa energía lumínica rompe las moléculas de agua y se combina con el dióxido de carbono. El resultado son carbohidratos (glucosa) que la planta usa como alimento. Todo esto sucede en los tilacoides (apilados forman grana) dentro del estroma del cloroplasto. Los factores limitantes son: agua, luz, temperatura y CO₂."
+    }
+  ]
+};
+
+// ========== ESTADO ==========
+let state = {
+  view: "home", // home | mode-select | flashcards | quiz | short | development | results
+  module: null,
+  index: 0,
+  score: 0,
+  total: 0,
+  flipped: false,
+  answered: false,
+  selfChecked: []
+};
+
+const main = document.getElementById("main");
+
+// ========== UTILIDADES ==========
+function normalize(s) {
+  return s.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function checkKeywords(answer, keywords) {
+  const norm = normalize(answer);
+  const found = [];
+  const missing = [];
+  keywords.forEach(k => {
+    if (norm.includes(normalize(k))) found.push(k);
+    else missing.push(k);
+  });
+  return { found, missing, ratio: found.length / keywords.length };
+}
+
+// ========== VISTAS ==========
+function renderHome() {
+  state.view = "home";
+  main.innerHTML = `
+    <div style="text-align:center;margin-bottom:18px;">
+      <p style="color:#6b21a8;font-size:14px;line-height:1.5;">
+        ¡Hola! 👋 Elige un tema para empezar a estudiar. Cada uno tiene <strong>4 modos</strong>: flashcards, opción múltiple, respuesta corta y desarrollo.
+      </p>
+    </div>
+    <div class="modules">
+      ${modules.map(m => `
+        <div class="module-card" onclick="selectModule('${m.id}')">
+          <div class="module-icon">${m.icon}</div>
+          <div class="module-info">
+            <h3>${m.title}</h3>
+            <p>${m.desc}</p>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+    <div style="margin-top:20px;padding:14px;background:#f3e8ff;border-radius:12px;font-size:13px;color:#6b21a8;line-height:1.5;text-align:center;">
+      💡 <strong>Consejo:</strong> empieza con flashcards para repasar los conceptos, después haz quiz, y termina con respuesta corta y desarrollo para evaluarte de verdad.
+    </div>
+  `;
+}
+
+function selectModule(id) {
+  state.module = id;
+  state.view = "mode-select";
+  const m = modules.find(x => x.id === id);
+  main.innerHTML = `
+    <button class="back-btn" onclick="renderHome()">← Volver al inicio</button>
+    <div class="mode-header">
+      <h2>${m.icon} ${m.title}</h2>
+    </div>
+    <p style="color:#6b21a8;font-size:14px;margin-bottom:14px;line-height:1.5;">
+      Elige cómo quieres estudiar este tema:
+    </p>
+    <div class="mode-selector">
+      <button class="mode-btn" onclick="startMode('flashcards')">
+        <span class="icon">🎴</span>
+        Flashcards
+        <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.8;">${flashcards[id]?.length || 0} tarjetas</div>
+      </button>
+      <button class="mode-btn" onclick="startMode('quiz')">
+        <span class="icon">✅</span>
+        Opción múltiple
+        <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.8;">${quiz[id]?.length || 0} preguntas</div>
+      </button>
+      <button class="mode-btn" onclick="startMode('short')">
+        <span class="icon">✍️</span>
+        Respuesta corta
+        <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.8;">${shortAnswer[id]?.length || 0} preguntas</div>
+      </button>
+      <button class="mode-btn" onclick="startMode('development')">
+        <span class="icon">📝</span>
+        Desarrollo
+        <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.8;">${development[id]?.length || 0} preguntas</div>
+      </button>
+    </div>
+  `;
+}
+
+function startMode(mode) {
+  state.view = mode;
+  state.index = 0;
+  state.score = 0;
+  state.flipped = false;
+  state.answered = false;
+  state.selfChecked = [];
+  
+  let data;
+  if (mode === "flashcards") data = flashcards[state.module];
+  if (mode === "quiz") data = quiz[state.module];
+  if (mode === "short") data = shortAnswer[state.module];
+  if (mode === "development") data = development[state.module];
+  
+  state.total = data.length;
+  renderCurrent();
+}
+
+function renderCurrent() {
+  if (state.view === "flashcards") renderFlashcard();
+  else if (state.view === "quiz") renderQuiz();
+  else if (state.view === "short") renderShort();
+  else if (state.view === "development") renderDevelopment();
+}
+
+function getModeTitle() {
+  const m = modules.find(x => x.id === state.module);
+  const titles = {
+    flashcards: "🎴 Flashcards",
+    quiz: "✅ Opción múltiple",
+    short: "✍️ Respuesta corta",
+    development: "📝 Desarrollo"
+  };
+  return `${m.icon} ${m.title} — ${titles[state.view]}`;
+}
+
+function renderProgressBar() {
+  const pct = ((state.index) / state.total) * 100;
+  return `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+}
+
+function renderHeader() {
+  return `
+    <button class="back-btn" onclick="selectModule('${state.module}')">← Volver al menú del tema</button>
+    <div class="mode-header">
+      <h2 style="font-size:14px;">${getModeTitle()}</h2>
+      <span class="progress">${state.index + 1} / ${state.total}</span>
+    </div>
+    ${renderProgressBar()}
+  `;
+}
+
+// ----- FLASHCARDS -----
+function renderFlashcard() {
+  const card = flashcards[state.module][state.index];
+  const showAnswer = state.flipped;
+  main.innerHTML = `
+    ${renderHeader()}
+    <div class="flashcard" onclick="flipCard()">
+      <span class="flashcard-label">${showAnswer ? "Respuesta" : "Pregunta"}</span>
+      <div class="flashcard-content">${showAnswer ? card.a : card.q}</div>
+      <span class="flashcard-hint">${showAnswer ? "Toca para regresar" : "Toca para ver la respuesta"}</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevCard()" ${state.index === 0 ? "disabled" : ""}>← Anterior</button>
+      <button class="btn" onclick="nextCard()">${state.index === state.total - 1 ? "Terminar ✓" : "Siguiente →"}</button>
+    </div>
+  `;
+}
+
+function flipCard() {
+  state.flipped = !state.flipped;
+  renderFlashcard();
+}
+
+function prevCard() {
+  if (state.index > 0) {
+    state.index--;
+    state.flipped = false;
+    renderFlashcard();
+  }
+}
+
+function nextCard() {
+  if (state.index < state.total - 1) {
+    state.index++;
+    state.flipped = false;
+    renderFlashcard();
+  } else {
+    renderResults();
+  }
+}
+
+// ----- QUIZ -----
+function renderQuiz() {
+  const q = quiz[state.module][state.index];
+  main.innerHTML = `
+    ${renderHeader()}
+    <div class="question-box">
+      <div class="question-text">${q.q}</div>
+    </div>
+    <div class="options" id="quiz-options">
+      ${q.opts.map((opt, i) => `
+        <button class="option" onclick="answerQuiz(${i})" data-idx="${i}">${String.fromCharCode(65+i)}) ${opt}</button>
+      `).join("")}
+    </div>
+    <div id="quiz-feedback"></div>
+    <button class="btn hidden" id="quiz-next" onclick="nextQuiz()">${state.index === state.total - 1 ? "Ver resultados ✓" : "Siguiente pregunta →"}</button>
+  `;
+}
+
+function answerQuiz(selected) {
+  if (state.answered) return;
+  state.answered = true;
+  const q = quiz[state.module][state.index];
+  const buttons = document.querySelectorAll("#quiz-options .option");
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.correct) b.classList.add("correct");
+    else if (i === selected) b.classList.add("incorrect");
+  });
+  
+  const isCorrect = selected === q.correct;
+  if (isCorrect) state.score++;
+  
+  const feedback = document.getElementById("quiz-feedback");
+  feedback.innerHTML = `
+    <div class="feedback ${isCorrect ? "success" : "error"}">
+      <strong>${isCorrect ? "¡Correcto! 🎉" : "Incorrecto 😕"}</strong>
+      ${!isCorrect ? `La respuesta correcta era: <strong style="display:inline;">${String.fromCharCode(65+q.correct)}) ${q.opts[q.correct]}</strong><br><br>` : ""}
+      ${q.exp}
+    </div>
+  `;
+  document.getElementById("quiz-next").classList.remove("hidden");
+}
+
+function nextQuiz() {
+  state.answered = false;
+  if (state.index < state.total - 1) {
+    state.index++;
+    renderQuiz();
+  } else {
+    renderResults();
+  }
+}
+
+// ----- RESPUESTA CORTA -----
+function renderShort() {
+  const q = shortAnswer[state.module][state.index];
+  main.innerHTML = `
+    ${renderHeader()}
+    <div class="question-box">
+      <div class="question-text">${q.q}</div>
+    </div>
+    <textarea class="text-input" id="short-input" placeholder="Escribe tu respuesta aquí..." rows="3"></textarea>
+    <button class="btn" id="short-submit" onclick="checkShort()">Verificar respuesta</button>
+    <div id="short-feedback"></div>
+    <button class="btn hidden" id="short-next" onclick="nextShort()">${state.index === state.total - 1 ? "Ver resultados ✓" : "Siguiente pregunta →"}</button>
+  `;
+}
+
+function checkShort() {
+  if (state.answered) return;
+  const input = document.getElementById("short-input").value.trim();
+  if (!input) {
+    alert("Por favor escribe una respuesta antes de verificar.");
+    return;
+  }
+  state.answered = true;
+  
+  const q = shortAnswer[state.module][state.index];
+  const result = checkKeywords(input, q.keywords);
+  
+  let level, emoji, msg;
+  if (result.ratio >= 0.85) { level = "success"; emoji = "🎉"; msg = "¡Excelente! Tu respuesta cubre lo más importante."; state.score++; }
+  else if (result.ratio >= 0.5) { level = "partial"; emoji = "🤔"; msg = "Vas bien, pero te faltaron algunos puntos clave."; state.score += 0.5; }
+  else { level = "error"; emoji = "📚"; msg = "Necesitas repasar este tema. Mira la respuesta modelo abajo."; }
+  
+  document.getElementById("short-input").disabled = true;
+  document.getElementById("short-submit").classList.add("hidden");
+  
+  const foundList = result.found.length ? result.found.map(k => `<span style="background:#10b981;color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;margin:2px;display:inline-block;">✓ ${k}</span>`).join(" ") : "<em>Ninguno</em>";
+  const missingList = result.missing.length ? result.missing.map(k => `<span style="background:#fecaca;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:12px;margin:2px;display:inline-block;">✗ ${k}</span>`).join(" ") : "";
+  
+  document.getElementById("short-feedback").innerHTML = `
+    <div class="feedback ${level}">
+      <strong>${emoji} ${msg}</strong>
+      <div style="margin-top:8px;"><strong style="display:inline;font-size:13px;">Conceptos clave que mencionaste:</strong><br>${foundList}</div>
+      ${missingList ? `<div style="margin-top:8px;"><strong style="display:inline;font-size:13px;">Te faltaron:</strong><br>${missingList}</div>` : ""}
+    </div>
+    <div class="model-answer">
+      <div class="model-answer-title">Respuesta modelo</div>
+      ${q.model}
+    </div>
+  `;
+  document.getElementById("short-next").classList.remove("hidden");
+}
+
+function nextShort() {
+  state.answered = false;
+  if (state.index < state.total - 1) {
+    state.index++;
+    renderShort();
+  } else {
+    renderResults();
+  }
+}
+
+// ----- DESARROLLO -----
+function renderDevelopment() {
+  const q = development[state.module][state.index];
+  main.innerHTML = `
+    ${renderHeader()}
+    <div class="question-box">
+      <div class="question-text">${q.q}</div>
+    </div>
+    <p style="font-size:12px;color:#6b21a8;margin-bottom:8px;">📝 Escribe tu respuesta con detalle. Después aparecerá la respuesta modelo y podrás autoevaluarte.</p>
+    <textarea class="text-input long" id="dev-input" placeholder="Desarrolla tu respuesta aquí, en varias oraciones..."></textarea>
+    <button class="btn" id="dev-submit" onclick="reviewDevelopment()">Ver respuesta modelo y autoevaluarme</button>
+    <div id="dev-feedback"></div>
+    <button class="btn hidden" id="dev-next" onclick="nextDevelopment()">${state.index === state.total - 1 ? "Ver resultados ✓" : "Siguiente pregunta →"}</button>
+  `;
+}
+
+function reviewDevelopment() {
+  if (state.answered) return;
+  const input = document.getElementById("dev-input").value.trim();
+  if (!input || input.length < 30) {
+    alert("Escribe una respuesta más desarrollada (al menos un par de oraciones) antes de continuar.");
+    return;
+  }
+  state.answered = true;
+  
+  const q = development[state.module][state.index];
+  const result = checkKeywords(input, q.keywords);
+  state.selfChecked = result.found.slice();
+  
+  document.getElementById("dev-input").disabled = true;
+  document.getElementById("dev-submit").classList.add("hidden");
+  
+  document.getElementById("dev-feedback").innerHTML = `
+    <div class="model-answer">
+      <div class="model-answer-title">Respuesta modelo</div>
+      ${q.model}
+    </div>
+    <div class="self-check">
+      <h4>✅ Autoevaluación — marca los conceptos que SÍ mencionaste en tu respuesta:</h4>
+      <div class="keyword-list" id="keyword-list">
+        ${q.keywords.map((k, i) => `
+          <div class="keyword ${result.found.includes(k) ? "checked" : ""}" data-kw="${k}" onclick="toggleKeyword(this, '${k}')">${k}</div>
+        `).join("")}
+      </div>
+      <p style="font-size:12px;color:#6b21a8;margin-bottom:8px;">💡 Hicimos una detección automática, pero <strong>tú</strong> decides si realmente cubriste cada concepto. Toca para marcar/desmarcar.</p>
+      <button class="btn" onclick="finalizeDevelopment()">Confirmar y continuar</button>
+    </div>
+  `;
+}
+
+function toggleKeyword(el, kw) {
+  el.classList.toggle("checked");
+  if (state.selfChecked.includes(kw)) {
+    state.selfChecked = state.selfChecked.filter(x => x !== kw);
+  } else {
+    state.selfChecked.push(kw);
+  }
+}
+
+function finalizeDevelopment() {
+  const q = development[state.module][state.index];
+  const ratio = state.selfChecked.length / q.keywords.length;
+  
+  let level, emoji, msg;
+  if (ratio >= 0.85) { level = "success"; emoji = "🎉"; msg = "¡Muy bien! Tu respuesta cubrió los puntos importantes."; state.score++; }
+  else if (ratio >= 0.5) { level = "partial"; emoji = "🤔"; msg = "Buen intento, pero hubo conceptos clave que no incluiste."; state.score += 0.5; }
+  else { level = "error"; emoji = "📚"; msg = "Te faltó bastante. Te recomiendo revisar la respuesta modelo y volver a intentarlo después."; }
+  
+  document.querySelector(".self-check").innerHTML = `
+    <div class="feedback ${level}" style="margin-top:0;">
+      <strong>${emoji} ${msg}</strong>
+      Marcaste <strong style="display:inline;">${state.selfChecked.length} de ${q.keywords.length}</strong> conceptos clave.
+    </div>
+  `;
+  document.getElementById("dev-next").classList.remove("hidden");
+}
+
+function nextDevelopment() {
+  state.answered = false;
+  state.selfChecked = [];
+  if (state.index < state.total - 1) {
+    state.index++;
+    renderDevelopment();
+  } else {
+    renderResults();
+  }
+}
+
+// ----- RESULTADOS -----
+function renderResults() {
+  const pct = Math.round((state.score / state.total) * 100);
+  let emoji, title, msg;
+  
+  if (state.view === "flashcards") {
+    main.innerHTML = `
+      <div class="results">
+        <div class="results-emoji">🎴</div>
+        <h2>¡Tarjetas completadas!</h2>
+        <p>Repasaste las ${state.total} flashcards de este tema.</p>
+        <p style="margin-top:14px;">Ahora pon a prueba lo que aprendiste con uno de los otros modos:</p>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn btn-secondary" onclick="selectModule('${state.module}')">Otro modo</button>
+          <button class="btn" onclick="renderHome()">Inicio</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+  
+  if (pct >= 85) { emoji = "🏆"; title = "¡Excelente!"; msg = "Dominas este tema. Sigue así."; }
+  else if (pct >= 70) { emoji = "👏"; title = "¡Muy bien!"; msg = "Vas en buen camino. Repasa los puntos donde fallaste."; }
+  else if (pct >= 50) { emoji = "💪"; title = "Vas mejorando"; msg = "Tienes la base, pero te falta afinar algunos detalles."; }
+  else { emoji = "📚"; title = "A repasar"; msg = "Te recomiendo volver a revisar las flashcards de este tema antes de seguir."; }
+  
+  main.innerHTML = `
+    <div class="results">
+      <div class="results-emoji">${emoji}</div>
+      <h2>${title}</h2>
+      <div class="results-score">${pct}%</div>
+      <p>${state.score % 1 === 0 ? state.score : state.score.toFixed(1)} de ${state.total} ${state.total === 1 ? "pregunta" : "preguntas"}</p>
+      <p style="margin-top:6px;">${msg}</p>
+      <div class="btn-row" style="margin-top:20px;">
+        <button class="btn btn-secondary" onclick="startMode('${state.view}')">Reintentar</button>
+        <button class="btn" onclick="selectModule('${state.module}')">Otro modo</button>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:10px;" onclick="renderHome()">Volver al inicio</button>
+    </div>
+  `;
+}
+
+// ========== INICIO ==========
+renderHome();
+</script>
+</body>
+</html>
